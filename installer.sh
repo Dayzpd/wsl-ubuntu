@@ -145,9 +145,9 @@ function installDocker() {
 
     fi
 
-    grepUserInDockerGroup=$( groups $USER | grep "docker" )
+    #grepUserInDockerGroup=$( groups $USER | grep "docker" )
 
-    if [[ $grepUserInDockerGroup != *docker* ]];
+    if [[ $( groups $USER ) != *docker* ]];
     then
 
         echo "Adding $USER to docker group..."
@@ -439,6 +439,7 @@ function installVault() {
 function installZsh() {
     ZSH_PLUGINS="$HOME/.oh-my-zsh/custom/plugins"
     ZSH_THEMES="$HOME/.oh-my-zsh/custom/themes"
+    ZSH_COMPLETIONS="$HOME/.oh-my-zsh/completions"
 
     mkdir -p ./backups
 
@@ -537,6 +538,8 @@ function installZsh() {
         echo "Already updated default shell to zsh for $USER."
 
     fi
+
+    mkdir -p $ZSH_COMPLETIONS
 }
 
 sudo apt install -y ca-certificates curl gnupg software-properties-common > /dev/null
