@@ -2,7 +2,7 @@
 
 set -e
 
-allUtilities="zsh,ansible,azurecli,docker,kubectl,kustomize,krew,helm,clusterctl,kind,kompose,packer,terraform,vault"
+allUtilities="zsh,ansible,azurecli,docker,flux,kubectl,kustomize,krew,helm,clusterctl,kind,kompose,packer,terraform,vault"
 commaSeparatedUtils=""
 
 # A function to display a help message
@@ -224,18 +224,36 @@ function installDocker() {
     fi
 }
 
-function installKubectl() {
-    # Check if the Kubernetes package repository is already added
-    if ! grep -q "https://pkgs.k8s.io/core:/stable:/v1.29/deb/" /etc/apt/sources.list.d/kubernetes.list; then
-        # If not, download the public signing key and add the repository
-        curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-        echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+function installFlux() {
+    curl -s https://fluxcd.io/install.sh | sudo bash
+
+    if [ -f $ZSH/completions/_flux ]; then
+        echo "Completions file for 'flux' already exists."
+    else
+        echo "Creating completions file for 'flux'."
+        flux completion zsh > $ZSH/completions/_flux
     fi
+
+}
+
+function installKubectl() {
+
+    k8sRepoVersion="v1.32"
+    kubernetesAptKeyring="/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
+    kubernetesAptSources="/etc/apt/sources.list.d/kubernetes.list"
+    k8sRepoUrl="https://pkgs.k8s.io/core:/stable:/$k8sRepoVersion/deb/"
+    k8sRepoKeyUrl="https://pkgs.k8s.io/core:/stable:/$k8sRepoVersion/deb/Release.key"
+
+    sudo rm -f $kubernetesAptSources
+    sudo rm -f $kubernetesAptKeyring
+
+    curl -fsSL $k8sRepoKeyUrl | sudo gpg --dearmor -o $kubernetesAptKeyring
+    echo "deb [signed-by=$kubernetesAptKeyring] $k8sRepoUrl /" | sudo tee $kubernetesAptSources
 
     # Update the apt package index and install kubectl
     sudo apt update -y > /dev/null
 
-    sudo apt install -y kubectl
+    sudo apt install -y kubectl > /dev/null
 
     if ! grep --quiet "alias k=\"kubectl\"" $HOME/.zshrc;
     then
@@ -542,9 +560,9 @@ function installZsh() {
     mkdir -p $ZSH_COMPLETIONS
 }
 
-sudo apt install -y ca-certificates curl gnupg software-properties-common > /dev/null
-sudo apt update -y > /dev/null
-sudo apt upgrade -y > /dev/null
+sudo apt install -y ca-certificates curl gnupg software-properties-common
+sudo apt update -y
+sudo apt upgrade -y
 
 
 IFS=',' 
@@ -578,6 +596,9 @@ for util in "${utilsList[@]}"; do
             ;;
         clusterctl)
             installClusterCtl
+            ;;
+        flux)
+            installFlux
             ;;
         kind)
             installKind
