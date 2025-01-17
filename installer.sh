@@ -2,7 +2,7 @@
 
 set -e
 
-allUtilities="zsh,ansible,azurecli,docker,flux,kubectl,kustomize,krew,helm,clusterctl,kind,kompose,packer,terraform,vault"
+allUtilities="zsh,ansible,azurecli,docker,flux,kubectl,kubeseal,kustomize,krew,helm,clusterctl,kind,kompose,packer,terraform,vault"
 commaSeparatedUtils=""
 
 # A function to display a help message
@@ -274,6 +274,16 @@ function installKubectl() {
         echo "Creating completions file for 'kubectl'."
         kubectl completion zsh > $ZSH/completions/_kubectl
     fi
+
+}
+
+function installKubeseal() {
+
+    curl -OL "https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.28.0/kubeseal-0.28.0-linux-amd64.tar.gz"
+    tar -xvzf kubeseal-0.28.0-linux-amd64.tar.gz kubeseal
+    sudo install -m 755 kubeseal /usr/local/bin/kubeseal
+    rm kubeseal-0.28.0-linux-amd64.tar.gz
+    rm kubeseal
 
 }
 
@@ -584,6 +594,9 @@ for util in "${utilsList[@]}"; do
             ;;
         kubectl)
             installKubectl
+            ;;
+        kubeseal)
+            installKubeseal
             ;;
         kustomize)
             installKustomize
